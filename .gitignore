@@ -1,0 +1,42 @@
+# 数据文件（大文件，不提交）
+*.tif
+*.tiff
+*.shp
+*.shx
+*.dbf
+*.prj
+*.sbn
+*.sbx
+*.cpg
+*.png
+*.jpg
+*.jpeg
+*.gdb/
+
+# Excel 数据文件（示例数据除外）
+*.xlsx
+*.xls
+!*.md
+
+# 输出目录
+*/浮梁属性栅格克里金统计_*/
+
+# 临时文件
+*.pyc
+__pycache__/
+*.tmp
+*.bak
+
+# ArcGIS 临时文件
+*.gdb/
+*.aprx/
+*.gdbindexes
+*.gdbtable
+*.gdbtablx
+*.atx
+*.freelist
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini

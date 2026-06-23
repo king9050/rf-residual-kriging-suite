@@ -1,159 +1,108 @@
-# rf-residual-kriging-suite
+# RF 残差克里金校正与统计全流程
 
-## 关于 / About
+这是一套完整的"随机森林预测栅格 + 残差克里金插值校正"工具链，用于土壤属性制图。
 
-**中文**
+## 功能特性
 
-这是一个面向土壤三普成果修改场景的 Trae skill 归档仓库，核心功能是把 **随机森林预测栅格 + 残差普通克里金校正**、下限校正、分级重分类、精度重算和统计表导出串成一套可复用流程。
+- ✅ **残差克里金插值**：对验证集残差进行普通克里金插值
+- ✅ **叠加校正**：RF 栅格 + 残差克里金栅格 = 最终校正栅格
+- ✅ **下限校正**：自动处理负值并应用制图下限
+- ✅ **精度对比**：验证 RF 和校正后栅格的 R²、RMSE
+- ✅ **分级重分类**：按土壤三普分级标准重分类
+- ✅ **统计对比表**：样点统计 vs 制图统计对比
+- ✅ **验证/训练集点表导出**：导出校正后的点表
+- ✅ **补充统计表**：表1（土地利用对比）、表2（乡镇分级）、表3（地类分级）
 
-**English**
+## 脚本说明
 
-This repository archives a Trae skill for soil-survey revision workflows. Its core purpose is to turn **RF prediction raster + residual ordinary kriging correction**, optional lower-bound correction, grading reclassification, accuracy recalculation, and summary-table export into a reusable pipeline.
-
-## 中文说明
-
-这个 skill 不是单纯的算法示例，而是用于土壤三普成果修改的完整工作流，主要包含：
-
-- 对 RF 预测栅格做残差普通克里金叠加校正
-- 可选的下限校正
-- 校正前后精度重算
-- 按分级标准重分类为 1~5 级分级栅格
-- 样点分级统计、制图面积分级统计
-- 验证集点表、训练集点表导出
-- 土地利用、乡镇、地类分级面积统计补充表
-
-### 适用场景
-
-- 已经有 RF 预测栅格
-- 已经有验证集点表和残差表
-- 需要在 ArcGIS Pro / arcpy 环境里完成残差克里金校正
-- 需要重新输出验证精度、分级结果和统计表
-- 需要按公报面积统一口径做等比例缩放
-
-### 主要输入
-
-- RF 预测栅格：`属性_预测结果.tif`
-- 验证集残差表：至少包含属性、经度、纬度、实际值、预测值、残差
-- 样点表：至少包含 `longitude`、`latitude`、各属性字段、`土地利用`
-- 分级标准表：`2属性分级标准表.xlsx`
-- 土地利用与乡镇矢量：`DLMC`、`一级地`、`XZQMC`
-- 公报面积：用于面积缩放和一致性校验
-
-### 核心流程
-
-1. 从验证集表中筛选出指定属性的验证点
-2. 生成点要素并投影到 RF 栅格坐标系
-3. 对残差进行普通克里金插值
-   - 变差函数：球状函数
-   - 搜索邻点数：12
-   - 环境参数：`snapRaster`、`extent`、`cellSize` 与 RF 栅格一致
-4. 叠加校正：`校正栅格 = RF 栅格 + 残差克里金栅格`
-5. 必要时执行下限校正，避免结果低于设定阈值
-6. 重新提取验证点结果，计算 `R²` 和 `RMSE`
-7. 按分级标准重分类，生成 1~5 级分级栅格
-8. 输出分级对比表、验证集点表、训练集点表与补充统计表
-
-### 推荐输出目录
-
-- `01_残差克里金栅格`
-- `02_叠加校正栅格`
-- `03_分级栅格`
-- `04_表格`
-- `05_验证集点表`
-- `05_训练集点表`
-- `06_补充统计表`
-
-### 推荐脚本入口
-
-- `rf_residual_kriging_pipeline.py`
-- `export_corrected_validation_points.py`
-- `export_training_points.py`
-- `landuse_township_tables.py`
-
-示例运行方式：
+### 统一入口（推荐）
 
 ```powershell
-& "C:\installsoft\gispro35\bin\Python\scripts\propy.bat" "G:\...\rf_residual_kriging_pipeline.py"
+& "C:\installsoft\gispro35\bin\Python\scripts\propy.bat" "scripts/run_full_pipeline.py"
 ```
 
-### 仓库内容
+特点：
+- 运行前显示完整配置信息
+- 交互式确认
+- 自动按顺序执行全流程
+- 运行状态和结果总结
 
-本仓库当前保存的是这个 Trae skill 的定义文件：
+### 独立脚本
 
-- `rf-residual-kriging-suite/SKILL.md`
+| 脚本 | 功能 |
+|------|------|
+| `rf_residual_kriging_pipeline.py` | 残差克里金插值 + 叠加校正 + 精度/分级对比 |
+| `export_corrected_validation_points.py` | 导出校正后的验证集点表 |
+| `export_training_points.py` | 导出校正后的训练集点表 |
+| `landuse_township_tables.py` | 生成补充统计表（表1、表2、表3） |
 
----
+## 输入数据要求
 
-## English
+1. **RF 预测栅格**：`属性_预测结果.tif`
+2. **验证集表**：包含属性、实际值、预测值、残差、经纬度
+3. **样点表**：包含 longitude、latitude 和各属性值
+4. **属性分级标准表**：土壤三普分级标准
+5. **土地利用矢量**：`DLMC` 和 `一级地` 字段
+6. **乡镇界矢量**：`XZQMC` 字段
 
-This repository archives a Trae skill for **RF prediction raster correction with residual ordinary kriging**.
+## 输出结构
 
-The skill is designed to turn the full soil-survey correction workflow into a reusable pipeline, including:
+```
+输出目录/
+├── 01_残差克里金栅格/
+├── 02_叠加校正栅格/
+├── 03_分级栅格/
+├── 04_表格/
+│   ├── RF与叠加残差克里金_精度对比.xlsx
+│   └── 叠加残差克里金_分级对比表.xlsx
+├── 05_验证集点表/
+├── 05_训练集点表_下限校正/
+└── 06_补充统计表/
+    ├── 表1_土地利用样点与制图对比.xlsx
+    ├── 表2_耕地_乡镇分级统计.xlsx
+    └── 表3_各地类分级统计.xlsx
+```
 
-- residual ordinary kriging correction on the RF prediction raster
-- optional lower-bound correction
-- recalculation of post-correction accuracy
-- reclassification into 1-5 grade rasters using a grading standard table
-- sample-based grading statistics and mapped-area statistics
-- export of validation-point tables and training-point tables
-- supplementary summary tables for land use, townships, and land-type grading areas
+## 环境要求
 
-### When to use it
+- **ArcGIS Pro**（含 Spatial Analyst 扩展）
+- **ArcGIS Pro Python 环境**（包含 arcpy）
+- **Python**：3.x（随 ArcGIS Pro 安装）
 
-- You already have an RF prediction raster
-- You already have validation-point residual tables
-- You need residual kriging correction in ArcGIS Pro / arcpy
-- You need updated accuracy metrics, grading outputs, and summary tables
-- You need area scaling that matches published report totals
+## 运行方式
 
-### Main inputs
+### 使用统一入口
 
-- RF prediction raster: `属性_预测结果.tif`
-- Validation residual table: at minimum, attribute, longitude, latitude, actual value, predicted value, and residual
-- Sample-point table: at minimum, `longitude`, `latitude`, attribute fields, and `土地利用`
-- Grading standard table: `2属性分级标准表.xlsx`
-- Land-use and township vectors: fields such as `DLMC`, `一级地`, and `XZQMC`
-- Published report area totals for scaling and consistency checks
+1. 配置 `scripts/run_full_pipeline.py` 中的数据路径
+2. 运行：
+```powershell
+& "C:\installsoft\gispro35\bin\Python\scripts\propy.bat" "scripts/run_full_pipeline.py"
+```
 
-### Core workflow
-
-1. Filter validation points by attribute from the merged validation table
-2. Generate point features and project them into the RF raster coordinate system
-3. Perform ordinary kriging on residuals
-   - Variogram model: spherical
-   - Search neighbors: 12
-   - Environment settings: `snapRaster`, `extent`, and `cellSize` aligned with the RF raster
-4. Apply correction: `corrected raster = RF raster + residual kriging raster`
-5. Apply lower-bound correction when needed
-6. Extract validation points again and compute `R²` and `RMSE`
-7. Reclassify the corrected raster into grades 1-5
-8. Export comparison tables, validation/training point tables, and supplemental statistics
-
-### Recommended output folders
-
-- `01_residual_kriging_raster`
-- `02_corrected_raster`
-- `03_grading_raster`
-- `04_tables`
-- `05_validation_points`
-- `05_training_points`
-- `06_supplementary_tables`
-
-### Suggested script entry points
-
-- `rf_residual_kriging_pipeline.py`
-- `export_corrected_validation_points.py`
-- `export_training_points.py`
-- `landuse_township_tables.py`
-
-Example:
+### 单独运行
 
 ```powershell
-& "C:\installsoft\gispro35\bin\Python\scripts\propy.bat" "G:\...\rf_residual_kriging_pipeline.py"
+& "C:\installsoft\gispro35\bin\Python\scripts\propy.bat" "scripts/rf_residual_kriging_pipeline.py"
 ```
 
-### Repository contents
+## 项目结构
 
-This repository currently stores the Trae skill definition file:
+```
+rf-residual-kriging-suite/
+├── SKILL.md              # Trae 技能描述
+├── README.md             # GitHub 项目说明（本文件）
+└── scripts/              # 核心脚本目录
+    ├── run_full_pipeline.py
+    ├── rf_residual_kriging_pipeline.py
+    ├── export_corrected_validation_points.py
+    ├── export_training_points.py
+    └── landuse_township_tables.py
+```
 
-- `rf-residual-kriging-suite/SKILL.md`
+## 许可证
+
+MIT License
+
+## 联系方式
+
+如遇问题，请查看 SKILL.md 获取详细使用说明。
